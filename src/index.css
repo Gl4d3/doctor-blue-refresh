@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -35,58 +36,60 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
+    --sidebar-foreground: 220 3% 20%;
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 224 71.4% 4.1%;
 
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --chat-user: 220 14% 96%;
+    --chat-assistant: 0 0% 100%;
+    --chat-info: 220 13% 91%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 20 14.3% 4.1%;
+    --foreground: 60 9.1% 97.8%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 20 14.3% 4.1%;
+    --card-foreground: 60 9.1% 97.8%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 20 14.3% 4.1%;
+    --popover-foreground: 60 9.1% 97.8%;
 
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 12 6.5% 15.1%;
+    --secondary-foreground: 60 9.1% 97.8%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 12 6.5% 15.1%;
+    --muted-foreground: 24 5.4% 63.9%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 12 6.5% 15.1%;
+    --accent-foreground: 60 9.1% 97.8%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 60 9.1% 97.8%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --border: 12 6.5% 15.1%;
+    --input: 12 6.5% 15.1%;
+    --ring: 24 5.7% 82.9%;
+
+    --sidebar-background: 220 26% 18%;
+    --sidebar-foreground: 220 13% 91%;
+    --sidebar-primary: 211 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 217 33% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 216 34% 17%;
+    --sidebar-ring: 224 71.4% 4.1%;
+
+    --chat-user: 220 26% 14%;
+    --chat-assistant: 220 26% 18%;
+    --chat-info: 230 20% 30%;
   }
 }
 
@@ -97,5 +100,139 @@
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .glass-effect {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+/* Custom chat styling */
+.chat-message-container {
+  @apply flex flex-col w-full max-w-4xl mx-auto px-4 md:px-8 py-6 transition-all duration-300 ease-in-out;
+}
+
+.chat-message-user {
+  @apply bg-chat-user;
+}
+
+.chat-message-assistant {
+  @apply bg-chat-assistant;
+}
+
+.chat-message-info {
+  @apply bg-chat-info text-center py-3 text-sm text-muted-foreground;
+}
+
+.chat-input-container {
+  @apply fixed bottom-0 left-0 right-0 pb-6 pt-4 backdrop-blur-lg glass-effect border-t border-border;
+}
+
+.typing-indicator {
+  @apply inline-flex items-center space-x-1 opacity-70;
+}
+
+.typing-indicator-dot {
+  @apply w-1.5 h-1.5 bg-current rounded-full;
+}
+
+/* Animation delays for dots */
+.typing-indicator-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+.typing-indicator-dot:nth-child(2) {
+  animation-delay: 0.3s;
+}
+.typing-indicator-dot:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+/* Markdown styling */
+.markdown {
+  @apply text-base leading-7;
+}
+
+.markdown p {
+  @apply mb-4;
+}
+
+.markdown h1, .markdown h2, .markdown h3, .markdown h4, .markdown h5, .markdown h6 {
+  @apply font-semibold mt-6 mb-3;
+}
+
+.markdown h1 {
+  @apply text-2xl;
+}
+
+.markdown h2 {
+  @apply text-xl;
+}
+
+.markdown h3 {
+  @apply text-lg;
+}
+
+.markdown code {
+  @apply px-1 py-0.5 bg-muted rounded text-sm;
+}
+
+.markdown pre {
+  @apply p-4 rounded-md bg-muted mb-4 overflow-x-auto;
+}
+
+.markdown pre code {
+  @apply bg-transparent p-0 text-sm;
+}
+
+.markdown ul, .markdown ol {
+  @apply pl-6 mb-4;
+}
+
+.markdown ul {
+  @apply list-disc;
+}
+
+.markdown ol {
+  @apply list-decimal;
+}
+
+.markdown blockquote {
+  @apply pl-4 border-l-4 border-muted italic mb-4;
+}
+
+.markdown a {
+  @apply text-blue-600 hover:underline dark:text-blue-400;
+}
+
+.markdown table {
+  @apply w-full border-collapse mb-4;
+}
+
+.markdown th, .markdown td {
+  @apply border border-border p-2;
+}
+
+.markdown th {
+  @apply bg-muted;
 }

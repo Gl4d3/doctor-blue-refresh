@@ -1,69 +1,88 @@
-# Welcome to your Lovable project
 
-## Project info
+# Doctor Blue - Medical AI Assistant
 
-**URL**: https://lovable.dev/projects/2aa20168-c248-400f-9964-8640bf8f9154
+## Overview
 
-## How can I edit this code?
+Doctor Blue is a sophisticated medical AI assistant designed to provide information and guidance on health-related topics. Built with a sleek, minimalist interface inspired by Apple's design principles, it offers a smooth, intuitive user experience while delivering valuable medical insights.
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- **Clean, Intuitive Interface**: Designed with a focus on simplicity and user experience
+- **Responsive Design**: Works seamlessly across desktop and mobile devices
+- **Real-time Streaming Responses**: See the AI's thoughts as they form
+- **Markdown Support**: Rich text formatting for clear medical information
+- **Chat History**: Maintain multiple conversation threads
+- **Powered by Groq**: Utilizes Groq's powerful language models for fast, accurate responses
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/2aa20168-c248-400f-9964-8640bf8f9154) and start prompting.
+## Technology Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend**: React, TypeScript, Tailwind CSS
+- **UI Components**: shadcn/ui
+- **State Management**: React Hooks
+- **API Integration**: Groq API
+- **Bundling**: Vite
 
-**Use your preferred IDE**
+## Development
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Prerequisites
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Node.js (v18+)
+- npm or yarn
 
-Follow these steps:
+### Installation
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+```bash
+# Clone the repository
+git clone https://github.com/Gl4d3/doctor-blue.git
+cd doctor-blue
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Install dependencies
+npm install
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Project Structure
 
-**Use GitHub Codespaces**
+```
+doctor-blue/
+├── src/
+│   ├── components/       # UI components
+│   │   ├── chat/         # Chat-specific components
+│   │   └── ui/           # shadcn/ui components
+│   ├── hooks/            # Custom React hooks
+│   ├── pages/            # Route components
+│   ├── services/         # API services
+│   ├── types/            # TypeScript type definitions
+│   └── lib/              # Utility functions
+├── public/               # Static assets
+└── ...                   # Configuration files
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Deployment
 
-## What technologies are used for this project?
+The application can be deployed to any static site hosting service:
 
-This project is built with .
+```bash
+# Build the application
+npm run build
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# The build output will be in the dist/ directory
+```
 
-## How can I deploy this project?
+## License
 
-Simply open [Lovable](https://lovable.dev/projects/2aa20168-c248-400f-9964-8640bf8f9154) and click on Share -> Publish.
+This project is licensed under the MIT License.
 
-## I want to use a custom domain - is that possible?
+## Acknowledgements
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+- Groq for providing the AI capabilities
+- shadcn/ui for the beautiful component library
+- The open-source community for all the amazing tools that made this possible
+
+---
+
+Created with ❤️ by [Dr. Blue Team](https://github.com/Gl4d3/doctor-blue)
