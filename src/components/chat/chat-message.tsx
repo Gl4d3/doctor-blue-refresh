@@ -3,6 +3,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { Message } from '@/types/chat';
 import { MarkdownRenderer } from '@/components/markdown-renderer';
+import { User, Bot } from 'lucide-react';
 
 interface ChatMessageProps {
   message: Message;
@@ -19,9 +20,14 @@ export function ChatMessage({ message, isLast }: ChatMessageProps) {
         isUser ? "chat-message-user" : "chat-message-assistant"
       )}
     >
-      <div className="flex items-start gap-4">
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-sm text-primary-foreground font-medium">
-          {isUser ? 'U' : 'A'}
+      <div className="flex items-start gap-4 max-w-4xl mx-auto">
+        <div className={cn(
+          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm",
+          isUser 
+            ? "bg-blue-600 text-white" 
+            : "bg-primary text-primary-foreground"
+        )}>
+          {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
         </div>
         <div className="flex-1 overflow-hidden">
           <MarkdownRenderer content={message.content || ''} />
