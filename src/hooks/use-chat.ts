@@ -57,20 +57,43 @@ export function useChat() {
 
   // Switch to a different session
   const switchSession = useCallback((sessionId: string) => {
-    setCurrentSessionId(sessionId);
-  }, []);
+    if (sessions.some(s => s.id === sessionId)) {
+      setCurrentSessionId(sessionId);
+    } else {
+      console.error(`Session with ID ${sessionId} not found`);
+      
+      // If the session doesn't exist, switch to the first available session
+      if (sessions.length > 0) {
+        setCurrentSessionId(sessions[0].id);
+      } else {
+        // If no sessions exist at all, create a new one
+        const newSession = createNewSession();
+        setSessions([newSession]);
+        setCurrentSessionId(newSession.id);
+      }
+    }
+  }, [sessions]);
 
   // Delete a session
   const deleteSession = useCallback((sessionId: string) => {
-    setSessions(prev => prev.filter(s => s.id !== sessionId));
-    if (currentSessionId === sessionId && sessions.length > 1) {
-      // Switch to another session if the current one is deleted
-      setCurrentSessionId(sessions.find(s => s.id !== sessionId)?.id || "");
-    } else if (sessions.length === 1) {
-      // If this was the last session, create a new one
-      startNewSession();
-    }
-  }, [currentSessionId, sessions, startNewSession]);
+    setSessions(prev => {
+      const updated = prev.filter(s => s.id !== sessionId);
+      
+      // If we're deleting the current session, switch to another one
+      if (currentSessionId === sessionId) {
+        if (updated.length > 0) {
+          setCurrentSessionId(updated[0].id);
+        } else {
+          // If no sessions left, create a new one
+          const newSession = createNewSession();
+          setCurrentSessionId(newSession.id);
+          return [newSession];
+        }
+      }
+      
+      return updated;
+    });
+  }, [currentSessionId]);
 
   // Rename a session
   const renameSession = useCallback((sessionId: string, title: string) => {
@@ -80,6 +103,28 @@ export function useChat() {
         : session
     ));
   }, []);
+
+  // Generate a title for the chat based on the first user message
+  const generateSessionTitle = useCallback(async (sessionId: string, userMessage: string) => {
+    try {
+      // Only generate a title for "New Chat" sessions
+      const session = sessions.find(s => s.id === sessionId);
+      if (!session || session.title !== "New Chat") return;
+      
+      // Create a short title based on the user message
+      let title = userMessage.substring(0, 30);
+      if (userMessage.length > 30) title += "...";
+      
+      // Update the session title
+      setSessions(prev => prev.map(s => 
+        s.id === sessionId 
+          ? { ...s, title, updatedAt: new Date() } 
+          : s
+      ));
+    } catch (error) {
+      console.error("Error generating session title:", error);
+    }
+  }, [sessions]);
 
   // Add a user message to the current session
   const addUserMessage = useCallback((content: string) => {
@@ -155,6 +200,11 @@ export function useChat() {
       // Add user message
       addUserMessage(content);
       
+      // Generate chat title from first user message
+      if (currentSession.messages.length === 0) {
+        generateSessionTitle(currentSessionId, content);
+      }
+      
       // Start generating response
       setIsGenerating(true);
       
@@ -227,6 +277,8 @@ export function useChat() {
     currentSessionId, 
     sessions, 
     currentSession.model,
+    currentSession.messages.length,
+    generateSessionTitle,
     toast
   ]);
 
