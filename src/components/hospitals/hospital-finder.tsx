@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getUserLocation, getNearbyHospitals, groupHospitalsByRange, Hospital } from '@/services/location';
-import { Loader2, MapPin, Navigation, Building2, Phone, Clock, Info } from 'lucide-react';
+import { Loader2, MapPin, Navigation, Building2, Phone, Clock, Info, AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
 
 export function HospitalFinder() {
   const [isLoading, setIsLoading] = useState(false);
@@ -14,12 +15,15 @@ export function HospitalFinder() {
   const [hospitals, setHospitals] = useState<{nearby: Hospital[], medium: Hospital[], far: Hospital[]} | null>(null);
   const [expandedSection, setExpandedSection] = useState<'nearby' | 'medium' | 'far' | null>(null);
   const [activeTab, setActiveTab] = useState<string>("nearby");
+  const [isRetrying, setIsRetrying] = useState(false);
+  const { toast } = useToast();
   
-  const fetchHospitals = async () => {
+  const fetchHospitals = async (retryAttempt = 0) => {
     setIsLoading(true);
     setError(null);
     
     try {
+      // Get user location first
       const userLocation = await getUserLocation();
       if (!userLocation) {
         throw new Error('Could not determine your location');
@@ -27,22 +31,63 @@ export function HospitalFinder() {
       
       setLocation(userLocation);
       
-      // Add a timeout to prevent long-running requests
+      // Reduce timeout to 10 seconds to prevent long wait times
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Request timed out')), 15000);
+        setTimeout(() => reject(new Error('Request timed out')), 10000);
       });
       
+      // Attempt to get hospital data with timeout
       const hospitalData = await Promise.race([
         getNearbyHospitals(userLocation.latitude, userLocation.longitude),
         timeoutPromise
       ]);
       
+      if (hospitalData.length === 0 && retryAttempt < 2) {
+        // If no hospitals found and not at max retries, try again with different parameters
+        setIsRetrying(true);
+        throw new Error('No hospitals found. Retrying...');
+      }
+      
       setHospitals(groupHospitalsByRange(hospitalData));
+      setIsRetrying(false);
+      
+      // Show success toast
+      if (hospitalData.length > 0) {
+        toast({
+          title: "Success",
+          description: `Found ${hospitalData.length} hospitals near you`,
+        });
+      } else {
+        toast({
+          title: "No results",
+          description: "No hospitals found in your area",
+          variant: "destructive"
+        });
+      }
+      
     } catch (err) {
+      console.error('Error fetching hospitals:', err);
+      
+      if (err instanceof Error && err.message === 'No hospitals found. Retrying...' && retryAttempt < 2) {
+        // Auto-retry with a reduced search radius
+        setTimeout(() => {
+          fetchHospitals(retryAttempt + 1);
+        }, 1000);
+        return;
+      }
+      
+      setIsRetrying(false);
       setError(err instanceof Error ? err.message : 'An error occurred');
-      console.error('Error:', err);
+      
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : 'Failed to load hospitals',
+        variant: "destructive"
+      });
     } finally {
-      setIsLoading(false);
+      if (!isRetrying) {
+        setIsLoading(false);
+      }
     }
   };
   
@@ -76,15 +121,17 @@ export function HospitalFinder() {
               </CardHeader>
               <CardContent className="p-3 pt-0 pb-2 text-sm text-muted-foreground">
                 <div className="flex flex-wrap gap-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center">
-                        <MapPin className="h-3 w-3 mr-1 flex-shrink-0 text-muted-foreground" /> 
-                        <span className="truncate max-w-[200px]">{hospital.address}</span>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">{hospital.address}</TooltipContent>
-                  </Tooltip>
+                  {hospital.address && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center">
+                          <MapPin className="h-3 w-3 mr-1 flex-shrink-0 text-muted-foreground" /> 
+                          <span className="truncate max-w-[200px]">{hospital.address}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">{hospital.address}</TooltipContent>
+                    </Tooltip>
+                  )}
                   
                   {hospital.openingHours && (
                     <Tooltip>
@@ -176,18 +223,22 @@ export function HospitalFinder() {
         </CardHeader>
         <CardContent>
           {error && (
-            <div className="bg-destructive/10 text-destructive p-3 rounded-md mb-4">
-              {error}
+            <div className="bg-destructive/10 text-destructive p-3 rounded-md mb-4 flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <div>{error}</div>
             </div>
           )}
           
           {!hospitals && !isLoading ? (
-            <Button onClick={fetchHospitals} className="w-full">
+            <Button onClick={() => fetchHospitals()} className="w-full">
               Find Nearby Hospitals
             </Button>
           ) : isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+              <p className="text-sm text-muted-foreground">
+                {isRetrying ? 'Retrying search with adjusted parameters...' : 'Searching for hospitals near you...'}
+              </p>
             </div>
           ) : hospitals && (
             <Tabs value={activeTab} onValueChange={setActiveTab}>

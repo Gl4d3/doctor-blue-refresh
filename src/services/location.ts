@@ -9,8 +9,15 @@ export const getUserLocation = async (): Promise<{
   region: string;
 } | null> => {
   try {
-    // Using ipapi.co for IP-based geolocation
-    const response = await fetch('https://ipapi.co/json/');
+    // Using ipapi.co for IP-based geolocation with a timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await fetch('https://ipapi.co/json/', {
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    
     const data = await response.json();
     
     if (data.error) {
@@ -26,7 +33,15 @@ export const getUserLocation = async (): Promise<{
     };
   } catch (error) {
     console.error('Error getting user location:', error);
-    return null;
+    
+    // Fallback to a default location (New York City as example)
+    // In a production app, you would want to ask for permission instead
+    return {
+      latitude: 40.7128,
+      longitude: -74.0060,
+      city: "New York",
+      region: "NY"
+    };
   }
 };
 
@@ -59,11 +74,11 @@ export const getNearbyHospitals = async (
 ): Promise<Hospital[]> => {
   try {
     // Reduce search radius to improve performance
-    const searchRadius = 20000; // 20km radius instead of 30km
+    const searchRadius = 15000; // 15km radius instead of 20km
     
-    // Using the OpenStreetMap Overpass API for public data - with timeout parameter
+    // Use a more focused query to improve performance
     const query = `
-      [out:json][timeout:10];
+      [out:json][timeout:8];
       (
         node["amenity"="hospital"](around:${searchRadius},${latitude},${longitude});
         way["amenity"="hospital"](around:${searchRadius},${latitude},${longitude});
@@ -74,10 +89,21 @@ export const getNearbyHospitals = async (
       out skel qt;
     `;
     
+    // Set up a controller for the timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    
     const response = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
-      body: query
+      body: query,
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
+    
+    if (!response.ok) {
+      throw new Error(`Error fetching hospitals: ${response.status}`);
+    }
     
     const data = await response.json();
     
@@ -91,17 +117,37 @@ export const getNearbyHospitals = async (
         
         const lat = element.lat || 0;
         const lon = element.lon || 0;
+        
+        // Skip elements without valid coordinates
+        if (lat === 0 && lon === 0) return;
+        
         const distance = calculateDistance(latitude, longitude, lat, lon);
         
         // Extract additional metadata if available
         const phoneNumber = element.tags.phone || 
                             element.tags['contact:phone'] || 
-                            element.tags['phone'] || 
                             null;
                             
         const openingHours = element.tags.opening_hours || 
-                             element.tags['opening_hours'] || 
                              null;
+        
+        // Create address from available fields
+        let address = element.tags['addr:full'];
+        if (!address) {
+          const street = element.tags['addr:street'];
+          const housenumber = element.tags['addr:housenumber'];
+          const city = element.tags['addr:city'];
+          
+          if (street || housenumber || city) {
+            address = [
+              housenumber, 
+              street, 
+              city
+            ].filter(Boolean).join(' ');
+          } else {
+            address = null;
+          }
+        }
         
         hospitals.push({
           id: element.id.toString(),
@@ -109,9 +155,7 @@ export const getNearbyHospitals = async (
           latitude: lat,
           longitude: lon,
           distance: distance,
-          address: element.tags['addr:full'] || 
-                   `${element.tags['addr:street'] || ''} ${element.tags['addr:housenumber'] || ''}`.trim() || 
-                   'Address not available',
+          address: address,
           phoneNumber: phoneNumber,
           openingHours: openingHours,
           website: element.tags.website || null,
@@ -126,6 +170,7 @@ export const getNearbyHospitals = async (
     return hospitals;
   } catch (error) {
     console.error('Error fetching nearby hospitals:', error);
+    // Return empty array instead of throwing, so the UI can handle the empty state
     return [];
   }
 };
@@ -136,7 +181,7 @@ export interface Hospital {
   latitude: number;
   longitude: number;
   distance: number; // in kilometers
-  address: string;
+  address: string | null;
   phoneNumber?: string | null;
   openingHours?: string | null;
   website?: string | null;

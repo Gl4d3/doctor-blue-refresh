@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { ChatSession } from '@/types/chat';
 import { useChat } from '@/hooks/use-chat';
@@ -9,6 +9,7 @@ import { useDarkMode } from '@/hooks/use-dark-mode';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
 
 export function ChatSidebar() {
   const { 
@@ -20,15 +21,81 @@ export function ChatSidebar() {
   } = useChat();
   
   const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const { toast } = useToast();
+  
+  // Log sessions on mount to help debugging
+  useEffect(() => {
+    console.log("ChatSidebar: Sessions loaded", sessions);
+    console.log("ChatSidebar: Current session", currentSession);
+  }, []);
   
   const handleSwitchSession = (sessionId: string) => {
     console.log("ChatSidebar: Switching to session", sessionId);
-    switchSession(sessionId);
+    
+    try {
+      switchSession(sessionId);
+      
+      // Find the session to get its title for the toast
+      const session = sessions.find(s => s.id === sessionId);
+      if (session) {
+        toast({
+          title: "Switched chat",
+          description: `Switched to "${session.title}"`,
+        });
+      }
+    } catch (error) {
+      console.error("Error switching sessions:", error);
+      toast({
+        title: "Error",
+        description: "Failed to switch chat session",
+        variant: "destructive"
+      });
+    }
   };
   
   const handleStartNewSession = () => {
     console.log("ChatSidebar: Starting new session");
-    startNewSession();
+    
+    try {
+      const newSession = startNewSession();
+      console.log("ChatSidebar: New session created", newSession);
+      
+      toast({
+        title: "New chat",
+        description: "Started a new chat session",
+      });
+    } catch (error) {
+      console.error("Error starting new session:", error);
+      toast({
+        title: "Error",
+        description: "Failed to start new chat session",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handleDeleteSession = (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log("ChatSidebar: Deleting session", sessionId);
+    
+    try {
+      // Find the session to get its title for the toast
+      const session = sessions.find(s => s.id === sessionId);
+      
+      deleteSession(sessionId);
+      
+      toast({
+        title: "Chat deleted",
+        description: session ? `Deleted "${session.title}"` : "Chat session deleted",
+      });
+    } catch (error) {
+      console.error("Error deleting session:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete chat session",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -64,18 +131,21 @@ export function ChatSidebar() {
       
       <ScrollArea className="flex-1 p-2">
         <div className="space-y-1">
-          {sessions.map(session => (
-            <ChatHistoryItem
-              key={session.id}
-              session={session}
-              isActive={session.id === currentSession.id}
-              onClick={() => handleSwitchSession(session.id)}
-              onDelete={(e) => {
-                e.stopPropagation();
-                deleteSession(session.id);
-              }}
-            />
-          ))}
+          {sessions.length === 0 ? (
+            <div className="text-center py-4 text-sm text-muted-foreground">
+              No chat sessions yet
+            </div>
+          ) : (
+            sessions.map(session => (
+              <ChatHistoryItem
+                key={session.id}
+                session={session}
+                isActive={session.id === currentSession?.id}
+                onClick={() => handleSwitchSession(session.id)}
+                onDelete={(e) => handleDeleteSession(session.id, e)}
+              />
+            ))
+          )}
         </div>
       </ScrollArea>
       

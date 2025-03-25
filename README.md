@@ -1,64 +1,52 @@
 
-# 🩺 Doctor Blue - Medical AI Assistant
+# 🏥 Doctor Blue - AI Medical Assistant 🤖
 
-<div align="center">
-  <img src="public/favicon.ico" alt="Doctor Blue Logo" width="120" />
-  <br />
-  <h3>Your AI-powered medical companion</h3>
-  <p>Get reliable medical information and find nearby hospitals instantly</p>
-</div>
+![Doctor Blue](public/doctor-blue-banner.png)
 
 ## 📋 Overview
 
-Doctor Blue is an advanced medical AI assistant designed to provide information and guidance on health-related topics. With a clean, intuitive interface inspired by Apple's design philosophy, it delivers a seamless user experience while providing valuable medical insights and practical assistance like finding nearby hospitals.
+Doctor Blue is an AI-powered medical assistant application designed to provide immediate medical advice, information, and help users find nearby hospitals in emergencies. It leverages advanced AI models to deliver accurate medical information while prioritizing user safety and accessibility.
 
-## ✨ Features
+## 🚀 Features
 
-- **🤖 AI Medical Assistant**: Get reliable information on medical conditions, symptoms, and general health advice
-- **🏥 Hospital Finder**: Locate nearby hospitals within customizable distance ranges
-- **💬 Chat History**: Maintain context across multiple conversations with automatic chat organization
-- **🔍 Contextual Memory**: The AI remembers previous interactions within the same chat session
-- **🌓 Dark/Light Mode**: Toggle between visual modes with a default dark theme
-- **📱 Responsive Design**: Works seamlessly across desktop and mobile devices
-- **⚡ Real-time Streaming**: See the AI's responses as they form for a more natural conversation
-- **📝 Markdown Support**: Rich text formatting for clear, structured medical information
+- **🩺 AI Medical Consultation**: Chat with an AI assistant trained on medical knowledge
+- **🏥 Hospital Finder**: Locate nearby hospitals and medical facilities based on your location
+- **🌓 Dark/Light Mode**: Comfortable viewing experience in any lighting condition
+- **💬 Chat History**: Save and revisit previous conversations
+- **⚡ Fast Responses**: Powered by Groq's high-performance LLM infrastructure
 
-## 🛠️ Technology Stack
+## 🛠️ Technologies Used
 
-<div align="center">
+- **Frontend Framework**: React 18 with TypeScript
+- **UI Components**: Shadcn UI & Tailwind CSS for responsive design
+- **State Management**: React Hooks and Context API
+- **Routing**: React Router for navigation
+- **Location Services**: IP-based geolocation + OpenStreetMap data
+- **LLM Provider**: Groq (using Llama-3-70B model)
+- **Data Persistence**: Local storage for chat history
 
-| Frontend | UI | State Management | API Integration |
-|:--------:|:--:|:----------------:|:---------------:|
-| React    | shadcn/ui | React Hooks | Groq API |
-| TypeScript | Tailwind CSS | Context API | OpenStreetMap |
-| Vite | Lucide Icons | | IP Geolocation |
+## 🏗️ Architecture
 
-</div>
+The application follows a modern React architecture with these key components:
 
-## 🧠 AI Capabilities
+### 🧠 Core Components
 
-Doctor Blue leverages advanced language models via the Groq API to provide:
+- **ChatInterface**: Main chat UI with message history and input
+- **HospitalFinder**: Component to locate and display nearby hospitals
+- **MarkdownRenderer**: Renders AI responses with proper formatting
 
-- **📚 Medical Information**: Access to extensive medical knowledge
-- **🧐 Symptom Analysis**: Help understanding potential causes of symptoms
-- **💊 Medication Information**: Basic details about medications and treatments
-- **🩺 General Health Advice**: Wellness and preventative care recommendations
+### 🔄 Custom Hooks
 
-> ⚠️ **Important**: Doctor Blue is an informational tool only and not a replacement for professional medical advice, diagnosis, or treatment. Always consult qualified healthcare providers for medical concerns.
+- **useChat**: Manages chat sessions, messages, and AI interactions
+- **useDarkMode**: Handles theme switching
+- **useToast**: Provides feedback notifications
 
-## 🔍 Hospital Finder Technology
+### 🔌 Services
 
-The hospital finder feature uses several technologies to help users locate nearby medical facilities:
+- **location.ts**: Geolocation and hospital data fetching
+- **groq.ts**: LLM API integration for AI responses
 
-1. **📍 IP-based Geolocation**: Determines user location without requiring permission
-2. **🗺️ OpenStreetMap Integration**: Queries the OpenStreetMap Overpass API to find hospital data
-3. **📏 Distance Calculation**: Uses the Haversine formula to accurately calculate distances
-4. **🔢 Range Categorization**: Organizes hospitals into three distance categories:
-   - Nearby: < 5km
-   - Medium distance: 5-20km  
-   - Far: > 20km
-
-## 🚀 Development
+## 💻 Getting Started
 
 ### Prerequisites
 
@@ -69,7 +57,9 @@ The hospital finder feature uses several technologies to help users locate nearb
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/doctor-blue.git
+git clone https://github.com/your-username/doctor-blue.git
+
+# Navigate to the project directory
 cd doctor-blue
 
 # Install dependencies
@@ -79,42 +69,49 @@ npm install
 npm run dev
 ```
 
-The application will be available at `http://localhost:8080`.
+## 🔍 How It Works
 
-## 📁 Project Structure
+### AI Chat
 
-```
-doctor-blue/
-├── src/
-│   ├── components/       # UI components
-│   │   ├── chat/         # Chat-specific components
-│   │   ├── hospitals/    # Hospital finder components
-│   │   └── ui/           # shadcn/ui components
-│   ├── hooks/            # Custom React hooks
-│   ├── pages/            # Route components
-│   ├── services/         # API services
-│   │   ├── groq.ts       # AI model integration
-│   │   └── location.ts   # Geolocation and hospital services
-│   ├── types/            # TypeScript type definitions
-│   └── lib/              # Utility functions
-├── public/               # Static assets
-└── ...                   # Configuration files
-```
+1. User sends a message through the chat interface
+2. The message is processed and sent to the Groq API
+3. The AI model generates a response based on medical knowledge
+4. The response is streamed back to the user in real-time
 
-## 🙏 Acknowledgements
+### Hospital Finder
 
-- [Groq](https://groq.com) for providing the AI capabilities
-- [shadcn/ui](https://ui.shadcn.com/) for the beautiful component library
-- [OpenStreetMap](https://www.openstreetmap.org/) for the hospital data
-- [Lucide Icons](https://lucide.dev/) for the icon set
-- [Tailwind CSS](https://tailwindcss.com/) for the styling framework
+1. User's location is determined through IP geolocation
+2. The application queries OpenStreetMap data for nearby hospitals
+3. Results are grouped by distance and displayed to the user
+4. Users can view details and get directions to the selected hospital
+
+## 🔒 Privacy & Safety
+
+- Location data is used only for finding nearby hospitals
+- Chat history is stored locally on the user's device
+- Medical information is provided for educational purposes only and should not replace professional medical advice
+
+## 🛣️ Roadmap
+
+- [ ] User authentication and cloud sync
+- [ ] Telehealth integration with real doctors
+- [ ] Medical document upload and analysis
+- [ ] Symptom tracking and health monitoring
+- [ ] Emergency contact system
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
+## 🙏 Acknowledgements
+
+- [Groq](https://groq.com/) for their powerful LLM API
+- [OpenStreetMap](https://www.openstreetmap.org/) for hospital location data
+- [Shadcn UI](https://ui.shadcn.com/) for the component library
+- [Tailwind CSS](https://tailwindcss.com/) for styling
+- [Lucide Icons](https://lucide.dev/) for beautiful iconography
+
 ---
 
-<div align="center">
-  Created with ❤️ by the Doctor Blue Team
-</div>
+⚠️ **Medical Disclaimer**: Doctor Blue provides information for educational purposes only. Always consult with a qualified healthcare provider for medical advice, diagnosis, or treatment.
+
