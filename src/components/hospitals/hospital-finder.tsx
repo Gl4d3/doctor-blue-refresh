@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getUserLocation, getNearbyHospitals, groupHospitalsByRange, Hospital } from '@/services/location';
-import { Loader2, MapPin, Navigation, Building2 } from 'lucide-react';
+import { Loader2, MapPin, Navigation, Building2, Phone, Clock } from 'lucide-react';
 
 export function HospitalFinder() {
   const [isLoading, setIsLoading] = useState(false);
@@ -69,8 +69,21 @@ export function HospitalFinder() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-0 pb-2 text-sm text-muted-foreground">
-                <p className="flex items-center"><MapPin className="h-3 w-3 mr-1" /> {hospital.address}</p>
-                <p>{hospital.distance.toFixed(1)} km away</p>
+                <div className="space-y-1">
+                  <p className="flex items-center">
+                    <MapPin className="h-3 w-3 mr-1 flex-shrink-0" /> 
+                    {hospital.address}
+                  </p>
+                  <p className="flex items-center">
+                    <Clock className="h-3 w-3 mr-1 flex-shrink-0" /> 
+                    {hospital.openingHours || 'Opening hours not available'}
+                  </p>
+                  <p className="flex items-center">
+                    <Phone className="h-3 w-3 mr-1 flex-shrink-0" /> 
+                    {hospital.phoneNumber || 'Phone number not available'}
+                  </p>
+                  <p>{hospital.distance.toFixed(1)} km away</p>
+                </div>
               </CardContent>
               <CardFooter className="p-2">
                 <Button 

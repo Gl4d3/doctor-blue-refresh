@@ -7,7 +7,7 @@ export interface Message {
   id: string;
   role: Role;
   content: string;
-  createdAt: Date;
+  createdAt: string; // ISO string format for JSON serialization
 }
 
 export interface ChatSession {
@@ -15,8 +15,8 @@ export interface ChatSession {
   title: string;
   messages: Message[];
   model: Model;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string; // ISO string format for JSON serialization
+  updatedAt: string; // ISO string format for JSON serialization
 }
 
 export interface ChatCompletionRequest {

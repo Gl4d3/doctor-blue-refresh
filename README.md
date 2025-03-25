@@ -1,28 +1,64 @@
 
-# Doctor Blue - Medical AI Assistant
+# 🩺 Doctor Blue - Medical AI Assistant
 
-## Overview
+<div align="center">
+  <img src="public/favicon.ico" alt="Doctor Blue Logo" width="120" />
+  <br />
+  <h3>Your AI-powered medical companion</h3>
+  <p>Get reliable medical information and find nearby hospitals instantly</p>
+</div>
 
-Doctor Blue is a sophisticated medical AI assistant designed to provide information and guidance on health-related topics. Built with a sleek, minimalist interface inspired by Apple's design principles, it offers a smooth, intuitive user experience while delivering valuable medical insights.
+## 📋 Overview
 
-## Features
+Doctor Blue is an advanced medical AI assistant designed to provide information and guidance on health-related topics. With a clean, intuitive interface inspired by Apple's design philosophy, it delivers a seamless user experience while providing valuable medical insights and practical assistance like finding nearby hospitals.
 
-- **Clean, Intuitive Interface**: Designed with a focus on simplicity and user experience
-- **Responsive Design**: Works seamlessly across desktop and mobile devices
-- **Real-time Streaming Responses**: See the AI's thoughts as they form
-- **Markdown Support**: Rich text formatting for clear medical information
-- **Chat History**: Maintain multiple conversation threads
-- **Powered by Groq**: Utilizes Groq's powerful language models for fast, accurate responses
+## ✨ Features
 
-## Technology Stack
+- **🤖 AI Medical Assistant**: Get reliable information on medical conditions, symptoms, and general health advice
+- **🏥 Hospital Finder**: Locate nearby hospitals within customizable distance ranges
+- **💬 Chat History**: Maintain context across multiple conversations with automatic chat organization
+- **🔍 Contextual Memory**: The AI remembers previous interactions within the same chat session
+- **🌓 Dark/Light Mode**: Toggle between visual modes with a default dark theme
+- **📱 Responsive Design**: Works seamlessly across desktop and mobile devices
+- **⚡ Real-time Streaming**: See the AI's responses as they form for a more natural conversation
+- **📝 Markdown Support**: Rich text formatting for clear, structured medical information
 
-- **Frontend**: React, TypeScript, Tailwind CSS
-- **UI Components**: shadcn/ui
-- **State Management**: React Hooks
-- **API Integration**: Groq API
-- **Bundling**: Vite
+## 🛠️ Technology Stack
 
-## Development
+<div align="center">
+
+| Frontend | UI | State Management | API Integration |
+|:--------:|:--:|:----------------:|:---------------:|
+| React    | shadcn/ui | React Hooks | Groq API |
+| TypeScript | Tailwind CSS | Context API | OpenStreetMap |
+| Vite | Lucide Icons | | IP Geolocation |
+
+</div>
+
+## 🧠 AI Capabilities
+
+Doctor Blue leverages advanced language models via the Groq API to provide:
+
+- **📚 Medical Information**: Access to extensive medical knowledge
+- **🧐 Symptom Analysis**: Help understanding potential causes of symptoms
+- **💊 Medication Information**: Basic details about medications and treatments
+- **🩺 General Health Advice**: Wellness and preventative care recommendations
+
+> ⚠️ **Important**: Doctor Blue is an informational tool only and not a replacement for professional medical advice, diagnosis, or treatment. Always consult qualified healthcare providers for medical concerns.
+
+## 🔍 Hospital Finder Technology
+
+The hospital finder feature uses several technologies to help users locate nearby medical facilities:
+
+1. **📍 IP-based Geolocation**: Determines user location without requiring permission
+2. **🗺️ OpenStreetMap Integration**: Queries the OpenStreetMap Overpass API to find hospital data
+3. **📏 Distance Calculation**: Uses the Haversine formula to accurately calculate distances
+4. **🔢 Range Categorization**: Organizes hospitals into three distance categories:
+   - Nearby: < 5km
+   - Medium distance: 5-20km  
+   - Far: > 20km
+
+## 🚀 Development
 
 ### Prerequisites
 
@@ -33,7 +69,7 @@ Doctor Blue is a sophisticated medical AI assistant designed to provide informat
 
 ```bash
 # Clone the repository
-git clone https://github.com/Gl4d3/doctor-blue.git
+git clone https://github.com/yourusername/doctor-blue.git
 cd doctor-blue
 
 # Install dependencies
@@ -45,44 +81,40 @@ npm run dev
 
 The application will be available at `http://localhost:8080`.
 
-### Project Structure
+## 📁 Project Structure
 
 ```
 doctor-blue/
 ├── src/
 │   ├── components/       # UI components
 │   │   ├── chat/         # Chat-specific components
+│   │   ├── hospitals/    # Hospital finder components
 │   │   └── ui/           # shadcn/ui components
 │   ├── hooks/            # Custom React hooks
 │   ├── pages/            # Route components
 │   ├── services/         # API services
+│   │   ├── groq.ts       # AI model integration
+│   │   └── location.ts   # Geolocation and hospital services
 │   ├── types/            # TypeScript type definitions
 │   └── lib/              # Utility functions
 ├── public/               # Static assets
 └── ...                   # Configuration files
 ```
 
-## Deployment
+## 🙏 Acknowledgements
 
-The application can be deployed to any static site hosting service:
+- [Groq](https://groq.com) for providing the AI capabilities
+- [shadcn/ui](https://ui.shadcn.com/) for the beautiful component library
+- [OpenStreetMap](https://www.openstreetmap.org/) for the hospital data
+- [Lucide Icons](https://lucide.dev/) for the icon set
+- [Tailwind CSS](https://tailwindcss.com/) for the styling framework
 
-```bash
-# Build the application
-npm run build
+## 📄 License
 
-# The build output will be in the dist/ directory
-```
-
-## License
-
-This project is licensed under the MIT License.
-
-## Acknowledgements
-
-- Groq for providing the AI capabilities
-- shadcn/ui for the beautiful component library
-- The open-source community for all the amazing tools that made this possible
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
 
-Created with ❤️ by [Dr. Blue Team](https://github.com/Gl4d3/doctor-blue)
+<div align="center">
+  Created with ❤️ by the Doctor Blue Team
+</div>

@@ -52,7 +52,7 @@ const calculateDistance = (
   return distance;
 };
 
-// Get nearby hospitals using Google Places API
+// Get nearby hospitals using OpenStreetMap Overpass API
 export const getNearbyHospitals = async (
   latitude: number, 
   longitude: number
@@ -90,6 +90,10 @@ export const getNearbyHospitals = async (
         const lon = element.lon || 0;
         const distance = calculateDistance(latitude, longitude, lat, lon);
         
+        // Extract additional metadata if available
+        const phoneNumber = element.tags.phone || element.tags['contact:phone'] || null;
+        const openingHours = element.tags.opening_hours || null;
+        
         hospitals.push({
           id: element.id.toString(),
           name: element.tags.name,
@@ -98,7 +102,11 @@ export const getNearbyHospitals = async (
           distance: distance,
           address: element.tags['addr:full'] || 
                    `${element.tags['addr:street'] || ''} ${element.tags['addr:housenumber'] || ''}`.trim() || 
-                   'Address not available'
+                   'Address not available',
+          phoneNumber: phoneNumber,
+          openingHours: openingHours,
+          website: element.tags.website || null,
+          emergencyService: element.tags.emergency === 'yes'
         });
       }
     });
@@ -120,6 +128,10 @@ export interface Hospital {
   longitude: number;
   distance: number; // in kilometers
   address: string;
+  phoneNumber?: string | null;
+  openingHours?: string | null;
+  website?: string | null;
+  emergencyService?: boolean;
 }
 
 // Group hospitals by distance range

@@ -84,8 +84,12 @@ interface ChatHistoryItemProps {
 }
 
 function ChatHistoryItem({ session, isActive, onClick, onDelete }: ChatHistoryItemProps) {
-  // Get the first user message or default to the session title
-  const chatPreview = session.messages.find(m => m.role === 'user')?.content.slice(0, 30) || session.title;
+  // Get the first user message or display the session title
+  const firstUserMessage = session.messages.find(m => m.role === 'user');
+  const chatTitle = session.title !== 'New Chat' ? session.title : 
+                  firstUserMessage ? firstUserMessage.content.slice(0, 30) + (firstUserMessage.content.length > 30 ? '...' : '') : 
+                  'New Chat';
+  
   const formattedDate = format(new Date(session.updatedAt), 'MMM d');
   
   return (
@@ -99,7 +103,7 @@ function ChatHistoryItem({ session, isActive, onClick, onDelete }: ChatHistoryIt
       onClick={onClick}
     >
       <MessageSquare className="h-4 w-4 mr-2 flex-shrink-0" />
-      <div className="flex-1 truncate">{chatPreview}</div>
+      <div className="flex-1 truncate">{chatTitle}</div>
       <span className="text-xs text-muted-foreground ml-1">{formattedDate}</span>
       
       <Button

@@ -138,13 +138,12 @@ export function ChatInterface() {
                   )}
                 </>
               )}
+              <div ref={messagesEndRef} />
             </TabsContent>
             
             <TabsContent value="hospitals" className="m-0 outline-none p-4">
               <HospitalFinder />
             </TabsContent>
-            
-            <div ref={messagesEndRef} />
           </Tabs>
         </div>
         

@@ -42,8 +42,8 @@ export function useChat() {
       title: "New Chat",
       messages: [],
       model: DEFAULT_MODEL,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: new Date().toISOString(), // Ensure ISO string format for JSON serialization
+      updatedAt: new Date().toISOString()
     };
   }
 
@@ -57,6 +57,8 @@ export function useChat() {
 
   // Switch to a different session
   const switchSession = useCallback((sessionId: string) => {
+    console.log("Switching to session:", sessionId);
+    
     if (sessions.some(s => s.id === sessionId)) {
       setCurrentSessionId(sessionId);
     } else {
@@ -99,7 +101,7 @@ export function useChat() {
   const renameSession = useCallback((sessionId: string, title: string) => {
     setSessions(prev => prev.map(session => 
       session.id === sessionId 
-        ? { ...session, title, updatedAt: new Date() } 
+        ? { ...session, title, updatedAt: new Date().toISOString() } 
         : session
     ));
   }, []);
@@ -111,14 +113,14 @@ export function useChat() {
       const session = sessions.find(s => s.id === sessionId);
       if (!session || session.title !== "New Chat") return;
       
-      // Create a short title based on the user message
+      // Create a summarized title from the user message
       let title = userMessage.substring(0, 30);
       if (userMessage.length > 30) title += "...";
       
       // Update the session title
       setSessions(prev => prev.map(s => 
         s.id === sessionId 
-          ? { ...s, title, updatedAt: new Date() } 
+          ? { ...s, title, updatedAt: new Date().toISOString() } 
           : s
       ));
     } catch (error) {
@@ -132,7 +134,7 @@ export function useChat() {
       id: uuidv4(),
       role: "user",
       content,
-      createdAt: new Date()
+      createdAt: new Date().toISOString()
     };
     
     setSessions(prev => prev.map(session => 
@@ -140,7 +142,7 @@ export function useChat() {
         ? { 
             ...session, 
             messages: [...session.messages, message],
-            updatedAt: new Date()
+            updatedAt: new Date().toISOString()
           } 
         : session
     ));
@@ -154,7 +156,7 @@ export function useChat() {
       id: uuidv4(),
       role: "assistant",
       content,
-      createdAt: new Date()
+      createdAt: new Date().toISOString()
     };
     
     setSessions(prev => prev.map(session => 
@@ -162,7 +164,7 @@ export function useChat() {
         ? { 
             ...session, 
             messages: [...session.messages, message],
-            updatedAt: new Date()
+            updatedAt: new Date().toISOString()
           } 
         : session
     ));
@@ -187,7 +189,7 @@ export function useChat() {
       return {
         ...session,
         messages,
-        updatedAt: new Date()
+        updatedAt: new Date().toISOString()
       };
     }));
   }, [currentSessionId]);
@@ -200,8 +202,13 @@ export function useChat() {
       // Add user message
       addUserMessage(content);
       
-      // Generate chat title from first user message
-      if (currentSession.messages.length === 0) {
+      // Generate chat title from first user message if this is a new chat
+      const updatedSession = sessions.find(s => s.id === currentSessionId);
+      
+      if (updatedSession && (
+          updatedSession.messages.length === 0 ||
+          (updatedSession.messages.length === 1 && updatedSession.title === "New Chat")
+      )) {
         generateSessionTitle(currentSessionId, content);
       }
       
@@ -219,11 +226,11 @@ export function useChat() {
       abortControllerRef.current = new AbortController();
       
       // Get all messages for the request including the new user message
-      const updatedSession = sessions.find(s => s.id === currentSessionId);
-      if (!updatedSession) throw new Error("Session not found");
+      const currentSessionWithUserMessage = sessions.find(s => s.id === currentSessionId);
+      if (!currentSessionWithUserMessage) throw new Error("Session not found");
       
       const messages = [
-        ...updatedSession.messages,
+        ...currentSessionWithUserMessage.messages,
         { role: "user" as const, content }
       ].map(({ role, content }) => ({ role, content }));
       
@@ -277,7 +284,6 @@ export function useChat() {
     currentSessionId, 
     sessions, 
     currentSession.model,
-    currentSession.messages.length,
     generateSessionTitle,
     toast
   ]);
@@ -295,7 +301,7 @@ export function useChat() {
   const clearMessages = useCallback(() => {
     setSessions(prev => prev.map(session => 
       session.id === currentSessionId 
-        ? { ...session, messages: [], updatedAt: new Date() } 
+        ? { ...session, messages: [], title: "New Chat", updatedAt: new Date().toISOString() } 
         : session
     ));
   }, [currentSessionId]);
@@ -304,7 +310,7 @@ export function useChat() {
   const setModel = useCallback((model: Model) => {
     setSessions(prev => prev.map(session => 
       session.id === currentSessionId 
-        ? { ...session, model, updatedAt: new Date() } 
+        ? { ...session, model, updatedAt: new Date().toISOString() } 
         : session
     ));
   }, [currentSessionId]);
