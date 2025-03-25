@@ -58,13 +58,16 @@ export const getNearbyHospitals = async (
   longitude: number
 ): Promise<Hospital[]> => {
   try {
-    // Using the OpenStreetMap Overpass API for public data
+    // Reduce search radius to improve performance
+    const searchRadius = 20000; // 20km radius instead of 30km
+    
+    // Using the OpenStreetMap Overpass API for public data - with timeout parameter
     const query = `
-      [out:json];
+      [out:json][timeout:10];
       (
-        node["amenity"="hospital"](around:30000,${latitude},${longitude});
-        way["amenity"="hospital"](around:30000,${latitude},${longitude});
-        relation["amenity"="hospital"](around:30000,${latitude},${longitude});
+        node["amenity"="hospital"](around:${searchRadius},${latitude},${longitude});
+        way["amenity"="hospital"](around:${searchRadius},${latitude},${longitude});
+        relation["amenity"="hospital"](around:${searchRadius},${latitude},${longitude});
       );
       out body;
       >;
@@ -91,8 +94,14 @@ export const getNearbyHospitals = async (
         const distance = calculateDistance(latitude, longitude, lat, lon);
         
         // Extract additional metadata if available
-        const phoneNumber = element.tags.phone || element.tags['contact:phone'] || null;
-        const openingHours = element.tags.opening_hours || null;
+        const phoneNumber = element.tags.phone || 
+                            element.tags['contact:phone'] || 
+                            element.tags['phone'] || 
+                            null;
+                            
+        const openingHours = element.tags.opening_hours || 
+                             element.tags['opening_hours'] || 
+                             null;
         
         hospitals.push({
           id: element.id.toString(),

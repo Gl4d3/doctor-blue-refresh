@@ -20,6 +20,16 @@ export function ChatSidebar() {
   } = useChat();
   
   const { isDarkMode, toggleDarkMode } = useDarkMode();
+  
+  const handleSwitchSession = (sessionId: string) => {
+    console.log("ChatSidebar: Switching to session", sessionId);
+    switchSession(sessionId);
+  };
+  
+  const handleStartNewSession = () => {
+    console.log("ChatSidebar: Starting new session");
+    startNewSession();
+  };
 
   return (
     <div className="w-64 h-screen border-r border-border flex flex-col bg-sidebar text-sidebar-foreground">
@@ -44,7 +54,7 @@ export function ChatSidebar() {
       
       <div className="p-2">
         <Button 
-          onClick={startNewSession} 
+          onClick={handleStartNewSession}
           className="w-full justify-start gap-2 bg-sidebar-primary text-sidebar-primary-foreground"
         >
           <PlusCircle className="h-4 w-4" />
@@ -59,7 +69,7 @@ export function ChatSidebar() {
               key={session.id}
               session={session}
               isActive={session.id === currentSession.id}
-              onClick={() => switchSession(session.id)}
+              onClick={() => handleSwitchSession(session.id)}
               onDelete={(e) => {
                 e.stopPropagation();
                 deleteSession(session.id);
@@ -86,9 +96,9 @@ interface ChatHistoryItemProps {
 function ChatHistoryItem({ session, isActive, onClick, onDelete }: ChatHistoryItemProps) {
   // Get the first user message or display the session title
   const firstUserMessage = session.messages.find(m => m.role === 'user');
-  const chatTitle = session.title !== 'New Chat' ? session.title : 
-                  firstUserMessage ? firstUserMessage.content.slice(0, 30) + (firstUserMessage.content.length > 30 ? '...' : '') : 
-                  'New Chat';
+  const chatTitle = session.title !== 'New Chat' && session.title ? session.title : 
+                   firstUserMessage ? firstUserMessage.content.slice(0, 30) + (firstUserMessage.content.length > 30 ? '...' : '') : 
+                   'New Chat';
   
   const formattedDate = format(new Date(session.updatedAt), 'MMM d');
   

@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getUserLocation, getNearbyHospitals, groupHospitalsByRange, Hospital } from '@/services/location';
-import { Loader2, MapPin, Navigation, Building2, Phone, Clock } from 'lucide-react';
+import { Loader2, MapPin, Navigation, Building2, Phone, Clock, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function HospitalFinder() {
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +27,16 @@ export function HospitalFinder() {
       
       setLocation(userLocation);
       
-      const hospitalData = await getNearbyHospitals(userLocation.latitude, userLocation.longitude);
+      // Add a timeout to prevent long-running requests
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out')), 15000);
+      });
+      
+      const hospitalData = await Promise.race([
+        getNearbyHospitals(userLocation.latitude, userLocation.longitude),
+        timeoutPromise
+      ]);
+      
       setHospitals(groupHospitalsByRange(hospitalData));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -35,10 +45,6 @@ export function HospitalFinder() {
       setIsLoading(false);
     }
   };
-  
-  useEffect(() => {
-    // Don't auto-fetch to avoid unnecessary API calls
-  }, []);
   
   const openDirections = (hospital: Hospital) => {
     if (!location) return;
@@ -62,27 +68,52 @@ export function HospitalFinder() {
         <div className="space-y-3">
           {list.slice(0, displayCount).map((hospital) => (
             <Card key={hospital.id} className="bg-card hover:bg-accent/50 transition-colors">
-              <CardHeader className="p-4 pb-2">
+              <CardHeader className="p-3 pb-2">
                 <CardTitle className="text-base font-medium flex items-center">
                   <Building2 className="h-4 w-4 mr-2 text-primary" />
                   {hospital.name}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 pt-0 pb-2 text-sm text-muted-foreground">
-                <div className="space-y-1">
-                  <p className="flex items-center">
-                    <MapPin className="h-3 w-3 mr-1 flex-shrink-0" /> 
-                    {hospital.address}
-                  </p>
-                  <p className="flex items-center">
-                    <Clock className="h-3 w-3 mr-1 flex-shrink-0" /> 
-                    {hospital.openingHours || 'Opening hours not available'}
-                  </p>
-                  <p className="flex items-center">
-                    <Phone className="h-3 w-3 mr-1 flex-shrink-0" /> 
-                    {hospital.phoneNumber || 'Phone number not available'}
-                  </p>
-                  <p>{hospital.distance.toFixed(1)} km away</p>
+              <CardContent className="p-3 pt-0 pb-2 text-sm text-muted-foreground">
+                <div className="flex flex-wrap gap-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center">
+                        <MapPin className="h-3 w-3 mr-1 flex-shrink-0 text-muted-foreground" /> 
+                        <span className="truncate max-w-[200px]">{hospital.address}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">{hospital.address}</TooltipContent>
+                  </Tooltip>
+                  
+                  {hospital.openingHours && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center">
+                          <Clock className="h-3 w-3 mr-1 flex-shrink-0 text-muted-foreground" /> 
+                          <span className="truncate max-w-[120px]">{hospital.openingHours}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">{hospital.openingHours}</TooltipContent>
+                    </Tooltip>
+                  )}
+                  
+                  {hospital.phoneNumber && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center">
+                          <Phone className="h-3 w-3 mr-1 flex-shrink-0 text-muted-foreground" /> 
+                          <span>{hospital.phoneNumber}</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">{hospital.phoneNumber}</TooltipContent>
+                    </Tooltip>
+                  )}
+                  
+                  <div className="flex items-center">
+                    <Info className="h-3 w-3 mr-1 flex-shrink-0 text-muted-foreground" />
+                    <span>{hospital.distance.toFixed(1)} km away</span>
+                  </div>
                 </div>
               </CardContent>
               <CardFooter className="p-2">

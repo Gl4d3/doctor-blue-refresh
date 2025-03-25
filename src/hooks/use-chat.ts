@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useRef, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { ChatSession, Message, Model } from "@/types/chat";
@@ -42,7 +41,7 @@ export function useChat() {
       title: "New Chat",
       messages: [],
       model: DEFAULT_MODEL,
-      createdAt: new Date().toISOString(), // Ensure ISO string format for JSON serialization
+      createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
   }
@@ -50,8 +49,11 @@ export function useChat() {
   // Start a new chat session
   const startNewSession = useCallback(() => {
     const newSession = createNewSession();
+    console.log("Creating new session:", newSession.id);
+    
     setSessions(prev => [newSession, ...prev]);
     setCurrentSessionId(newSession.id);
+    
     return newSession;
   }, []);
 
@@ -59,6 +61,7 @@ export function useChat() {
   const switchSession = useCallback((sessionId: string) => {
     console.log("Switching to session:", sessionId);
     
+    // Validate the session exists before switching
     if (sessions.some(s => s.id === sessionId)) {
       setCurrentSessionId(sessionId);
     } else {
@@ -116,6 +119,8 @@ export function useChat() {
       // Create a summarized title from the user message
       let title = userMessage.substring(0, 30);
       if (userMessage.length > 30) title += "...";
+      
+      console.log("Generating title for session:", sessionId, "->", title);
       
       // Update the session title
       setSessions(prev => prev.map(s => 
@@ -203,12 +208,7 @@ export function useChat() {
       addUserMessage(content);
       
       // Generate chat title from first user message if this is a new chat
-      const updatedSession = sessions.find(s => s.id === currentSessionId);
-      
-      if (updatedSession && (
-          updatedSession.messages.length === 0 ||
-          (updatedSession.messages.length === 1 && updatedSession.title === "New Chat")
-      )) {
+      if (currentSession.messages.length === 0 && currentSession.title === "New Chat") {
         generateSessionTitle(currentSessionId, content);
       }
       
