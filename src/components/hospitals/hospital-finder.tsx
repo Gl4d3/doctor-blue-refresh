@@ -12,6 +12,7 @@ export function HospitalFinder() {
   const [location, setLocation] = useState<{latitude: number; longitude: number; city: string; region: string} | null>(null);
   const [hospitals, setHospitals] = useState<{nearby: Hospital[], medium: Hospital[], far: Hospital[]} | null>(null);
   const [expandedSection, setExpandedSection] = useState<'nearby' | 'medium' | 'far' | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("nearby");
   
   const fetchHospitals = async () => {
     setIsLoading(true);
@@ -145,7 +146,7 @@ export function HospitalFinder() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : hospitals && (
-            <Tabs defaultValue="nearby">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid grid-cols-3 mb-4">
                 <TabsTrigger value="nearby">
                   &lt;5km ({hospitals.nearby.length})
