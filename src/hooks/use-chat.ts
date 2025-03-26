@@ -1,8 +1,9 @@
+
 import { useState, useCallback, useRef, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { ChatSession, Message, Model } from "@/types/chat";
 import { sendChatCompletion, streamChatCompletion } from "@/services/groq";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const DEFAULT_MODEL: Model = "llama3-70b-8192";
 
@@ -67,21 +68,26 @@ export function useChat() {
     try {
       const saved = storageHelper.getItem("current-session-id");
       if (saved && sessions.some(s => s.id === saved)) {
+        console.log("Found saved current session ID:", saved);
         return saved;
       }
-      return sessions[0].id;
+      console.log("No valid saved session ID, using first session:", sessions[0]?.id);
+      return sessions[0]?.id || "";
     } catch (error) {
       console.error("Error setting current session ID:", error);
-      return sessions[0].id;
+      return sessions[0]?.id || "";
     }
   });
   
   const [isGenerating, setIsGenerating] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
+  
+  // Force a re-render when currentSessionId changes
+  const [renderKey, setRenderKey] = useState(Date.now());
 
   // Computed property to get the current session
-  const currentSession = sessions.find(s => s.id === currentSessionId) || sessions[0];
+  const currentSession = sessions.find(s => s.id === currentSessionId) || sessions[0] || createNewSession();
   
   // Log the current state (for debugging)
   useEffect(() => {
@@ -104,6 +110,8 @@ export function useChat() {
     try {
       if (currentSessionId) {
         storageHelper.setItem("current-session-id", currentSessionId);
+        // Force a re-render to ensure UI updates
+        setRenderKey(Date.now());
       }
     } catch (error) {
       console.error("Error saving current session ID to localStorage:", error);
@@ -127,7 +135,9 @@ export function useChat() {
         return [newSession, ...prev];
       });
       
+      // Set the current session ID and force re-render
       setCurrentSessionId(newSession.id);
+      setRenderKey(Date.now());
       
       return newSession;
     } catch (error) {
@@ -149,6 +159,9 @@ export function useChat() {
       // Validate the session exists before switching
       if (sessions.some(s => s.id === sessionId)) {
         setCurrentSessionId(sessionId);
+        // Force a re-render to ensure UI updates
+        setRenderKey(Date.now());
+        console.log("Successfully switched to session:", sessionId);
       } else {
         console.error(`Session with ID ${sessionId} not found`);
         
@@ -156,12 +169,14 @@ export function useChat() {
         if (sessions.length > 0) {
           console.log("Falling back to first available session:", sessions[0].id);
           setCurrentSessionId(sessions[0].id);
+          setRenderKey(Date.now());
         } else {
           // If no sessions exist at all, create a new one
           console.log("No sessions exist, creating a new one");
           const newSession = createNewSession();
           setSessions([newSession]);
           setCurrentSessionId(newSession.id);
+          setRenderKey(Date.now());
         }
       }
     } catch (error) {
@@ -186,11 +201,14 @@ export function useChat() {
           if (updated.length > 0) {
             console.log("Switching to first available session after delete:", updated[0].id);
             setCurrentSessionId(updated[0].id);
+            // Force a re-render to ensure UI updates
+            setRenderKey(Date.now());
           } else {
             // If no sessions left, create a new one
             console.log("No sessions left after delete, creating a new one");
             const newSession = createNewSession();
             setCurrentSessionId(newSession.id);
+            setRenderKey(Date.now());
             return [newSession];
           }
         }
@@ -499,14 +517,99 @@ export function useChat() {
     sessions,
     currentSession,
     isGenerating,
+    renderKey, // Add renderKey to the return value
     startNewSession,
     switchSession,
     deleteSession,
-    renameSession,
-    generateSessionTitle,
-    addUserMessage,
-    addAssistantMessage,
-    updateLastMessage,
+    renameSession: useCallback((sessionId: string, title: string) => {
+      setSessions(prev => prev.map(session => 
+        session.id === sessionId 
+          ? { ...session, title, updatedAt: new Date().toISOString() } 
+          : session
+      ));
+    }, []),
+    generateSessionTitle: useCallback(async (sessionId: string, userMessage: string) => {
+      try {
+        // Only generate a title for "New Chat" sessions
+        const session = sessions.find(s => s.id === sessionId);
+        if (!session || session.title !== "New Chat") return;
+        
+        // Create a summarized title from the user message
+        let title = userMessage.substring(0, 30);
+        if (userMessage.length > 30) title += "...";
+        
+        console.log("Generating title for session:", sessionId, "->", title);
+        
+        // Update the session title
+        setSessions(prev => prev.map(s => 
+          s.id === sessionId 
+            ? { ...s, title, updatedAt: new Date().toISOString() } 
+            : s
+        ));
+      } catch (error) {
+        console.error("Error generating session title:", error);
+      }
+    }, [sessions]),
+    addUserMessage: useCallback((content: string) => {
+      const message: Message = {
+        id: uuidv4(),
+        role: "user",
+        content,
+        createdAt: new Date().toISOString()
+      };
+      
+      setSessions(prev => prev.map(session => 
+        session.id === currentSessionId 
+          ? { 
+              ...session, 
+              messages: [...session.messages, message],
+              updatedAt: new Date().toISOString()
+            } 
+          : session
+      ));
+      
+      return message;
+    }, [currentSessionId]),
+    addAssistantMessage: useCallback((content: string) => {
+      const message: Message = {
+        id: uuidv4(),
+        role: "assistant",
+        content,
+        createdAt: new Date().toISOString()
+      };
+      
+      setSessions(prev => prev.map(session => 
+        session.id === currentSessionId 
+          ? { 
+              ...session, 
+              messages: [...session.messages, message],
+              updatedAt: new Date().toISOString()
+            } 
+          : session
+      ));
+      
+      return message;
+    }, [currentSessionId]),
+    updateLastMessage: useCallback((content: string) => {
+      setSessions(prev => prev.map(session => {
+        if (session.id !== currentSessionId) return session;
+        
+        const messages = [...session.messages];
+        if (messages.length === 0) return session;
+        
+        const lastIndex = messages.length - 1;
+        messages[lastIndex] = {
+          ...messages[lastIndex],
+          content
+        };
+        
+        return {
+          ...session,
+          messages,
+          updatedAt: new Date().toISOString()
+        };
+      }));
+    }, [currentSessionId]),
     sendMessage,
     stopGeneration,
     clearMessages,

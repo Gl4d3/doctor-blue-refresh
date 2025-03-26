@@ -11,18 +11,22 @@ export const getUserLocation = async (): Promise<{
   try {
     // Using ipapi.co for IP-based geolocation with a timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // Reduced from 5000 to 3000ms
     
     const response = await fetch('https://ipapi.co/json/', {
       signal: controller.signal
     });
     clearTimeout(timeoutId);
     
+    if (!response.ok) {
+      throw new Error(`Failed to fetch location: ${response.status}`);
+    }
+    
     const data = await response.json();
     
     if (data.error) {
       console.error('Error fetching location:', data.reason);
-      return null;
+      return getFallbackLocation();
     }
     
     return {
@@ -33,16 +37,19 @@ export const getUserLocation = async (): Promise<{
     };
   } catch (error) {
     console.error('Error getting user location:', error);
-    
-    // Fallback to a default location (New York City as example)
-    // In a production app, you would want to ask for permission instead
-    return {
-      latitude: 40.7128,
-      longitude: -74.0060,
-      city: "New York",
-      region: "NY"
-    };
+    return getFallbackLocation();
   }
+};
+
+// Fallback location function - returns a default location
+const getFallbackLocation = () => {
+  console.log('Using fallback location (New York City)');
+  return {
+    latitude: 40.7128,
+    longitude: -74.0060,
+    city: "New York",
+    region: "NY"
+  };
 };
 
 // Calculate distance between two points using Haversine formula
@@ -74,11 +81,11 @@ export const getNearbyHospitals = async (
 ): Promise<Hospital[]> => {
   try {
     // Reduce search radius to improve performance
-    const searchRadius = 15000; // 15km radius instead of 20km
+    const searchRadius = 10000; // 10km radius instead of 15km
     
     // Use a more focused query to improve performance
     const query = `
-      [out:json][timeout:8];
+      [out:json][timeout:5];
       (
         node["amenity"="hospital"](around:${searchRadius},${latitude},${longitude});
         way["amenity"="hospital"](around:${searchRadius},${latitude},${longitude});
@@ -91,83 +98,105 @@ export const getNearbyHospitals = async (
     
     // Set up a controller for the timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // Reduced from 8000 to 5000ms
     
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: query,
-      signal: controller.signal
-    });
+    // Implement retry logic
+    let retries = 0;
+    const maxRetries = 2;
     
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      throw new Error(`Error fetching hospitals: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    
-    // Process the results
-    const hospitals: Hospital[] = [];
-    const processedIds = new Set();
-    
-    data.elements.forEach((element: any) => {
-      if (element.tags && element.tags.name && !processedIds.has(element.id)) {
-        processedIds.add(element.id);
+    while (retries <= maxRetries) {
+      try {
+        const response = await fetch('https://overpass-api.de/api/interpreter', {
+          method: 'POST',
+          body: query,
+          signal: controller.signal
+        });
         
-        const lat = element.lat || 0;
-        const lon = element.lon || 0;
+        clearTimeout(timeoutId);
         
-        // Skip elements without valid coordinates
-        if (lat === 0 && lon === 0) return;
-        
-        const distance = calculateDistance(latitude, longitude, lat, lon);
-        
-        // Extract additional metadata if available
-        const phoneNumber = element.tags.phone || 
-                            element.tags['contact:phone'] || 
-                            null;
-                            
-        const openingHours = element.tags.opening_hours || 
-                             null;
-        
-        // Create address from available fields
-        let address = element.tags['addr:full'];
-        if (!address) {
-          const street = element.tags['addr:street'];
-          const housenumber = element.tags['addr:housenumber'];
-          const city = element.tags['addr:city'];
-          
-          if (street || housenumber || city) {
-            address = [
-              housenumber, 
-              street, 
-              city
-            ].filter(Boolean).join(' ');
-          } else {
-            address = null;
-          }
+        if (!response.ok) {
+          throw new Error(`Error fetching hospitals: ${response.status}`);
         }
         
-        hospitals.push({
-          id: element.id.toString(),
-          name: element.tags.name,
-          latitude: lat,
-          longitude: lon,
-          distance: distance,
-          address: address,
-          phoneNumber: phoneNumber,
-          openingHours: openingHours,
-          website: element.tags.website || null,
-          emergencyService: element.tags.emergency === 'yes'
+        const data = await response.json();
+        
+        // Process the results
+        const hospitals: Hospital[] = [];
+        const processedIds = new Set();
+        
+        data.elements.forEach((element: any) => {
+          if (element.tags && element.tags.name && !processedIds.has(element.id)) {
+            processedIds.add(element.id);
+            
+            const lat = element.lat || 0;
+            const lon = element.lon || 0;
+            
+            // Skip elements without valid coordinates
+            if (lat === 0 && lon === 0) return;
+            
+            const distance = calculateDistance(latitude, longitude, lat, lon);
+            
+            // Skip if too far away
+            if (distance > 50) return; // Only include hospitals within 50km
+            
+            // Extract additional metadata if available
+            const phoneNumber = element.tags.phone || 
+                                element.tags['contact:phone'] || 
+                                null;
+                                
+            const openingHours = element.tags.opening_hours || 
+                                 null;
+            
+            // Create address from available fields
+            let address = element.tags['addr:full'];
+            if (!address) {
+              const street = element.tags['addr:street'];
+              const housenumber = element.tags['addr:housenumber'];
+              const city = element.tags['addr:city'];
+              
+              if (street || housenumber || city) {
+                address = [
+                  housenumber, 
+                  street, 
+                  city
+                ].filter(Boolean).join(' ');
+              } else {
+                address = null;
+              }
+            }
+            
+            hospitals.push({
+              id: element.id.toString(),
+              name: element.tags.name,
+              latitude: lat,
+              longitude: lon,
+              distance: distance,
+              address: address,
+              phoneNumber: phoneNumber,
+              openingHours: openingHours,
+              website: element.tags.website || null,
+              emergencyService: element.tags.emergency === 'yes'
+            });
+          }
         });
+        
+        // Sort by distance
+        hospitals.sort((a, b) => a.distance - b.distance);
+        
+        return hospitals;
+      } catch (error) {
+        retries++;
+        if (retries > maxRetries) {
+          console.error('Error fetching nearby hospitals after retries:', error);
+          return [];
+        }
+        
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
-    });
+    }
     
-    // Sort by distance
-    hospitals.sort((a, b) => a.distance - b.distance);
-    
-    return hospitals;
+    return [];
   } catch (error) {
     console.error('Error fetching nearby hospitals:', error);
     // Return empty array instead of throwing, so the UI can handle the empty state

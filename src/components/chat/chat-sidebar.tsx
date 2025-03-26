@@ -15,6 +15,7 @@ export function ChatSidebar() {
   const { 
     sessions, 
     currentSession, 
+    renderKey, // Use renderKey to force re-renders
     startNewSession, 
     switchSession, 
     deleteSession 
@@ -27,7 +28,7 @@ export function ChatSidebar() {
   useEffect(() => {
     console.log("ChatSidebar: Sessions loaded", sessions);
     console.log("ChatSidebar: Current session", currentSession);
-  }, []);
+  }, [sessions, currentSession, renderKey]);
   
   const handleSwitchSession = (sessionId: string) => {
     console.log("ChatSidebar: Switching to session", sessionId);
@@ -99,7 +100,7 @@ export function ChatSidebar() {
   };
 
   return (
-    <div className="w-64 h-screen border-r border-border flex flex-col bg-sidebar text-sidebar-foreground">
+    <div className="w-64 h-screen border-r border-border flex flex-col bg-sidebar text-sidebar-foreground" key={renderKey}>
       <div className="flex items-center justify-between p-4 border-b border-border">
         <h1 className="font-semibold">Doctor Blue</h1>
         <Tooltip>
@@ -138,7 +139,7 @@ export function ChatSidebar() {
           ) : (
             sessions.map(session => (
               <ChatHistoryItem
-                key={session.id}
+                key={`${session.id}-${renderKey}`} // Add renderKey to force re-render
                 session={session}
                 isActive={session.id === currentSession?.id}
                 onClick={() => handleSwitchSession(session.id)}
@@ -164,6 +165,13 @@ interface ChatHistoryItemProps {
 }
 
 function ChatHistoryItem({ session, isActive, onClick, onDelete }: ChatHistoryItemProps) {
+  // Log whenever the active state changes (for debugging)
+  useEffect(() => {
+    if (isActive) {
+      console.log("ChatHistoryItem: Active session item", session.id, session.title);
+    }
+  }, [isActive, session]);
+
   // Get the first user message or display the session title
   const firstUserMessage = session.messages.find(m => m.role === 'user');
   const chatTitle = session.title !== 'New Chat' && session.title ? session.title : 

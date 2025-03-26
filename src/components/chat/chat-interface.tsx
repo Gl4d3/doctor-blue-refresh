@@ -15,6 +15,7 @@ export function ChatInterface() {
   const { 
     currentSession, 
     isGenerating, 
+    renderKey, // Add renderKey to force re-renders when needed
     sendMessage, 
     stopGeneration, 
     startNewSession, 
@@ -30,13 +31,20 @@ export function ChatInterface() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [currentSession.messages, isGenerating]);
   
+  // Logging for debugging
+  useEffect(() => {
+    console.log("ChatInterface re-rendered with session:", currentSession.id);
+    console.log("Current session title:", currentSession.title);
+    console.log("Messages count:", currentSession.messages.length);
+  }, [currentSession, renderKey]);
+  
   // Handle sending a new message
   const handleSendMessage = (content: string) => {
     sendMessage(content);
   };
   
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background" key={renderKey}>
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <ChatSidebar />
